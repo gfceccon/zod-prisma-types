@@ -1,20 +1,20 @@
 import { FileWriter } from '../classes';
 import { CreateFiles } from '../types';
-import { writeModelOrType } from './contentWriters';
+import { writeCustomEnum, writeModelOrType } from './contentWriters';
 
 /////////////////////////////////////////////////
 // FUNCTION
 /////////////////////////////////////////////////
 
 export const writeModelFiles: CreateFiles = ({ path, dmmf }) => {
-  const { createModelTypes, writeBarrelFiles } = dmmf.generatorConfig;
+  const { modelsPath, enumPath, createModelTypes, writeBarrelFiles } = dmmf.generatorConfig;
 
   if (!createModelTypes) return;
 
   const indexFileWriter = new FileWriter();
-
-  const folderPath = indexFileWriter.createPath(`${path}/modelSchema`);
-
+  const folderPath = indexFileWriter.createPath(`${path}/${modelsPath}`);
+  const enumsPath = indexFileWriter.createPath(`${path}/${enumPath}`);
+  
   if (folderPath) {
     if (writeBarrelFiles) {
       indexFileWriter.createFile(
@@ -23,37 +23,45 @@ export const writeModelFiles: CreateFiles = ({ path, dmmf }) => {
           const writeExportSet = new Set<string>();
 
           dmmf.datamodel.models.forEach((model) => {
-            writeExportSet.add(`${model.name}Schema`);
+            indexFileWriter.createPath(`${folderPath}/${model.name}`);
+            writeExportSet.add(`${model.name}/${model.name}Schema`);
           });
           dmmf.datamodel.types.forEach((model) => {
-            writeExportSet.add(`${model.name}Schema`);
+            indexFileWriter.createPath(`${folderPath}/${model.name}`);
+            writeExportSet.add(`${model.name}/${model.name}Schema`);
           });
 
           writeExportSet.forEach((exportName) => {
             writeExport(`*`, `./${exportName}`);
           });
-
-          // dmmf.datamodel.models.forEach((model) => {
-          //   writeExport(`*`, `./${model.name}Schema`);
-          // });
-          // dmmf.datamodel.types.forEach((model) => {
-          //   writeExport(`*`, `./${model.name}Schema`);
-          // });
         },
       );
     }
 
     dmmf.datamodel.models.forEach((model) => {
+      const modelPath = indexFileWriter.createPath(
+        `${folderPath}/${model.name}`,
+      );
       new FileWriter().createFile(
-        `${folderPath}/${model.name}Schema.ts`,
+        `${modelPath}/${model.name}Schema.ts`,
         (fileWriter) => writeModelOrType({ fileWriter, dmmf }, model),
       );
     });
 
     dmmf.datamodel.types.forEach((model) => {
+      const modelPath = indexFileWriter.createPath(
+        `${folderPath}/${model.name}`,
+      );
       new FileWriter().createFile(
-        `${folderPath}/${model.name}Schema.ts`,
+        `${modelPath}/${model.name}Schema.ts`,
         (fileWriter) => writeModelOrType({ fileWriter, dmmf }, model),
+      );
+    });
+
+    dmmf.datamodel.enums.forEach((enumData) => {
+      new FileWriter().createFile(
+        `${enumsPath}/${enumData.name}Schema.ts`,
+        (fileWriter) => writeCustomEnum({ fileWriter, dmmf }, enumData),
       );
     });
   }

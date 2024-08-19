@@ -14,9 +14,6 @@ import {
 } from '../constants/regex';
 import { GeneratorConfig } from '../schemas';
 
-const SPLIT_NAME_REGEX =
-  /Unchecked|Create|Update|CreateMany|CreateManyAndReturn|UpdateMany|Upsert|Where|WhereUnique|OrderBy|ScalarWhere|Aggregate|GroupBy/g;
-
 /////////////////////////////////////////////////
 // CLASS
 /////////////////////////////////////////////////
@@ -69,10 +66,7 @@ export class ExtendedDMMFInputType
    * from the datamodel can be added to the input types.
    */
   private _setLinkedModel(datamodel: ExtendedDMMFDatamodel) {
-    return datamodel.models.find((model) => {
-      // need to split string to obtain the model name from the input type name.
-      return model.name === this.name.split(SPLIT_NAME_REGEX)[0];
-    });
+    return datamodel.models.find((model) => this.name.match(model.name));
   }
 
   private _setFields(fields: ReadonlyDeep<DMMF.SchemaArg[]>) {

@@ -1,6 +1,6 @@
 import { DMMF, ReadonlyDeep } from '@prisma/generator-helper';
 
-import { ExtendedDMMFModel } from '.';
+import { ExtendedDMMFEnum, ExtendedDMMFModel } from '.';
 import { PRISMA_ACTION_ARRAY } from '../constants/objectMaps';
 import { GeneratorConfig } from '../schemas';
 import { ExtendedDMMFDatamodel } from './extendedDMMFDatamodel';
@@ -19,7 +19,7 @@ export class ExtendedDMMFOutputType
   readonly fields: ExtendedDMMFSchemaField[];
   readonly prismaActionFields: ExtendedDMMFSchemaField[];
   readonly prismaOtherFields: ExtendedDMMFSchemaField[];
-  readonly linkedModel?: ExtendedDMMFModel;
+  readonly linkedModel?: ExtendedDMMFModel | ExtendedDMMFEnum;
   readonly selectImports: Set<string>;
   readonly includeImports: Set<string>;
 
@@ -53,9 +53,7 @@ export class ExtendedDMMFOutputType
    * from the datamodel can be added to the input types.
    */
   private _setLinkedModel(datamodel: ExtendedDMMFDatamodel) {
-    return datamodel.models.find((model) => {
-      return this.name.match(model.name);
-    });
+    return [...datamodel.models, ...datamodel.enums].find((model) => this.name.match(model.name));
   }
 
   /**

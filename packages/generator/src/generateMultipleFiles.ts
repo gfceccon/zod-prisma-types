@@ -14,7 +14,7 @@ export const generateMultipleFiles = ({ dmmf, path }: CreateOptions) => {
   if (writeBarrelFiles) {
     new FileWriter().createFile(`${path}/index.ts`, ({ writeExport }) => {
       if (createModelTypes) {
-        writeExport('*', './modelSchema');
+        writeExport('*', `./${dmmf.generatorConfig.modelsPath}`);
       }
 
       writeExport('*', `./${dmmf.generatorConfig.inputTypePath}`);

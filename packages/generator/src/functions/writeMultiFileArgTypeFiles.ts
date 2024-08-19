@@ -28,22 +28,31 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
       indexFileWriter.createFile(
         `${folderPath}/index.ts`,
         ({ writeExport }) => {
-          const writeExportSet = new Set<string>();
+          const writeExportArray = new Array<{
+            export: string;
+            path: string;
+          }>();
 
           dmmf.schema.outputObjectTypes.model.forEach((model) => {
             if (model.hasRelationField()) {
-              writeExportSet.add(`${model.name}ArgsSchema`);
+              writeExportArray.push({
+                export: `${model.name}ArgsSchema`,
+                path: `${model.name}/${model.name}Schema`,
+              });
             }
           });
 
           dmmf.schema.outputObjectTypes.argTypes.forEach((outputType) => {
             outputType.prismaActionFields.forEach((field) => {
-              writeExportSet.add(`${field.argName}Schema`);
+              writeExportArray.push({
+                export: `${field.argName}Schema`,
+                path: `${field.modelType}/${field.name}Schema`,
+              });
             });
           });
 
-          writeExportSet.forEach((exportName) => {
-            writeExport(`{ ${exportName} }`, `./${exportName}`);
+          writeExportArray.forEach((exportName) => {
+            writeExport(`{ ${exportName.export} }`, `./${exportName.path}`);
           });
         },
       );
@@ -54,21 +63,25 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
     ////////////////////////////////////////////////////
 
     dmmf.schema.outputObjectTypes.model.forEach((model) => {
+      const outputPath = indexFileWriter.createPath(
+        `${path}/${outputTypePath}/${model.name}`,
+      );
+
       if (model.writeIncludeArgs()) {
         new FileWriter().createFile(
-          `${folderPath}/${model.name}ArgsSchema.ts`,
+          `${outputPath}/${model.name}ArgsSchema.ts`,
           (fileWriter) => writeArgs({ fileWriter, dmmf }, model),
         );
       }
 
       if (model.writeCountArgs()) {
         new FileWriter().createFile(
-          `${folderPath}/${model.name}CountOutputTypeArgsSchema.ts`,
+          `${outputPath}/${model.name}CountOutputTypeArgsSchema.ts`,
           (fileWriter) => writeCountArgs({ fileWriter, dmmf }, model),
         );
 
         new FileWriter().createFile(
-          `${folderPath}/${model.name}CountOutputTypeSelectSchema.ts`,
+          `${outputPath}/${model.name}CountOutputTypeSelectSchema.ts`,
           (fileWriter) => writeCountSelect({ fileWriter, dmmf }, model),
         );
       }
@@ -80,8 +93,12 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
 
     dmmf.schema.outputObjectTypes.argTypes.forEach((outputType) => {
       outputType.prismaActionFields.forEach((field) => {
+        const outputPath = indexFileWriter.createPath(
+          `${folderPath}/${field.modelType}`,
+        );
+
         new FileWriter().createFile(
-          `${folderPath}/${field.argName}Schema.ts`,
+          `${outputPath}/${field.argName}Schema.ts`,
           (fileWriter) => writeOutputObjectType({ fileWriter, dmmf }, field),
         );
       });

@@ -91,8 +91,11 @@ export const configSchema = z.object({
     .optional()
     .default('false')
     .transform((val) => val === 'true'),
-  inputTypePath: z.string().optional().default('inputTypeSchemas'), // currently only used internally
-  outputTypePath: z.string().optional().default('outputTypeSchemas'), // currently only used internally
+  modelsPath: z.string().optional().default('Models'), // currently only used internally
+  inputTypePath: z.string().optional().default('Input'), // currently only used internally
+  enumPath: z.string().optional().default('Enum'), // currently only used internally
+  enumTypePath: z.string().optional().default('EnumTypes'), // currently only used internally
+  outputTypePath: z.string().optional().default('Output'), // currently only used internally
   prismaVersion: PrismaVersionSchema.optional(),
   decimalJSInstalled: z.boolean().default(false),
 });

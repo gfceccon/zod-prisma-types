@@ -1,4 +1,5 @@
 import { DMMF, ReadonlyDeep } from '@prisma/generator-helper';
+import { upperFirst } from 'lodash';
 
 import { ExtendedDMMFDatamodel } from './extendedDMMFDatamodel';
 import { ExtendedDMMFField } from './extendedDMMFField';
@@ -13,6 +14,27 @@ import {
   PRISMA_FUNCTION_TYPES_WITH_VALIDATORS_WHERE_UNIQUE,
 } from '../constants/regex';
 import { GeneratorConfig } from '../schemas';
+
+type RegexFlags = 'd' | 'g' | 'i' | 'm' | 's' | 'u' | 'v' | 'y';
+
+const SPLIT_REGEX_COMPOUND_UNIQUE = /CompoundUnique/g;
+const SPLIT_REGEX_TYPES: string[] = [
+  'Unchecked',
+  'Create',
+  'Update',
+  'CreateMany',
+  'CreateManyAndReturn',
+  'UpdateMany',
+  'Upsert',
+  'Where',
+  'WhereUnique',
+  'OrderBy',
+  'ScalarWhere',
+  'Aggregate',
+  'GroupBy',
+];
+
+const FLAGS: RegexFlags[] = ['g'];
 
 /////////////////////////////////////////////////
 // CLASS
@@ -45,10 +67,10 @@ export class ExtendedDMMFInputType
     super(type.name);
     this.generatorConfig = generatorConfig;
     this.name = type.name;
-    this.linkedModel = this._setLinkedModel(datamodel);
     this.constraints = type.constraints;
     this.meta = type.meta;
     this.fields = this._setFields(type.fields);
+    this.linkedModel = this._setLinkedModel(datamodel);
     // this.fieldMap = type.fieldMap;
     this.isJsonField = this._setIsJsonField();
     this.isBytesField = this._setIsBytesField();
@@ -66,7 +88,33 @@ export class ExtendedDMMFInputType
    * from the datamodel can be added to the input types.
    */
   private _setLinkedModel(datamodel: ExtendedDMMFDatamodel) {
-    return datamodel.models.find((model) => this.name.match(model.name));
+
+    // Some select files containes CompoundUnique, remove the args to get the model
+    const compoundMatch = this.name.match(SPLIT_REGEX_COMPOUND_UNIQUE);
+    let compoundModel = '';
+
+    if (compoundMatch != null) {
+      compoundModel = this.name.split(compoundMatch[0])[0];
+      const fields = this.fields.map((field) => upperFirst(field.name.trim()));
+      compoundModel = fields.reduce(
+        (prev, current) => prev.replace(current, ''),
+        compoundModel,
+      );
+    }
+
+    return datamodel.models.find(
+      (model) =>
+        // Need to split string to obtain the model name from the input type name.
+        // Some names contains functions like Min, Max, etc. combine those before searching.
+        // Also check if it was a compound unique select.
+        model.name ===
+          this.name.split(
+            new RegExp(
+              SPLIT_REGEX_TYPES.join("|"),
+              FLAGS.join(),
+            ),
+          )[0] || model.name === compoundModel,
+    );
   }
 
   private _setFields(fields: ReadonlyDeep<DMMF.SchemaArg[]>) {

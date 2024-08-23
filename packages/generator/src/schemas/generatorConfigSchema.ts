@@ -96,6 +96,9 @@ export const configSchema = z.object({
   enumPath: z.string().optional().default('Enum'), // currently only used internally
   enumTypePath: z.string().optional().default('EnumTypes'), // currently only used internally
   outputTypePath: z.string().optional().default('Output'), // currently only used internally
+  filterPathName: z.string().optional().default('_Filter'), // currently only used internally
+  operationPathName: z.string().optional().default('_Operation'), // currently only used internally
+  noModelAssignedName: z.string().optional().default('$All'), // currently only used internally
   prismaVersion: PrismaVersionSchema.optional(),
   decimalJSInstalled: z.boolean().default(false),
 });

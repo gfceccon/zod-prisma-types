@@ -5,3 +5,4 @@ export * from './getPrismaDbProvider';
 export * from './getPrismaVersion';
 export * from './parseGeneratorConfig';
 export * from './skipGenerator';
+export * from './exportMap';

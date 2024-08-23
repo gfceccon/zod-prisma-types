@@ -6,6 +6,7 @@ import {
   writeCountSelect,
   writeOutputObjectType,
 } from './contentWriters';
+import ExportMap from '../utils/exportMap';
 
 /////////////////////////////////////////////////
 // FUNCTION
@@ -16,48 +17,13 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
 
   const { outputTypePath, writeBarrelFiles } = dmmf.generatorConfig;
 
-  // WRITE INDEX FILE
+  // FOLDER PATH AND EXPORT INDEX FILES
   // ------------------------------------------------------------
-
   const indexFileWriter = new FileWriter();
-
   const folderPath = indexFileWriter.createPath(`${path}/${outputTypePath}`);
+  const exportMap = new ExportMap();
 
   if (folderPath) {
-    if (writeBarrelFiles) {
-      indexFileWriter.createFile(
-        `${folderPath}/index.ts`,
-        ({ writeExport }) => {
-          const writeExportArray = new Array<{
-            export: string;
-            path: string;
-          }>();
-
-          dmmf.schema.outputObjectTypes.model.forEach((model) => {
-            if (model.hasRelationField()) {
-              writeExportArray.push({
-                export: `${model.name}ArgsSchema`,
-                path: `${model.name}/${model.name}Schema`,
-              });
-            }
-          });
-
-          dmmf.schema.outputObjectTypes.argTypes.forEach((outputType) => {
-            outputType.prismaActionFields.forEach((field) => {
-              writeExportArray.push({
-                export: `${field.argName}Schema`,
-                path: `${field.modelType}/${field.name}Schema`,
-              });
-            });
-          });
-
-          writeExportArray.forEach((exportName) => {
-            writeExport(`{ ${exportName.export} }`, `./${exportName.path}`);
-          });
-        },
-      );
-    }
-
     ////////////////////////////////////////////////////
     // INCLUDE SELECT ARGS
     ////////////////////////////////////////////////////
@@ -72,6 +38,10 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
           `${outputPath}/${model.name}ArgsSchema.ts`,
           (fileWriter) => writeArgs({ fileWriter, dmmf }, model),
         );
+
+        exportMap
+          .hasOrCreate(model.name)
+          .add(`${outputPath}/${model.name}ArgsSchema`);
       }
 
       if (model.writeCountArgs()) {
@@ -80,10 +50,18 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
           (fileWriter) => writeCountArgs({ fileWriter, dmmf }, model),
         );
 
+        exportMap
+          .hasOrCreate(model.name)
+          .add(`${model.name}CountOutputTypeArgsSchema`);
+
         new FileWriter().createFile(
           `${outputPath}/${model.name}CountOutputTypeSelectSchema.ts`,
           (fileWriter) => writeCountSelect({ fileWriter, dmmf }, model),
         );
+
+        exportMap
+          .hasOrCreate(model.name)
+          .add(`${model.name}CountOutputTypeSelectSchema`);
       }
     });
 
@@ -93,15 +71,35 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
 
     dmmf.schema.outputObjectTypes.argTypes.forEach((outputType) => {
       outputType.prismaActionFields.forEach((field) => {
+        const modelName = field.modelType.toString();
         const outputPath = indexFileWriter.createPath(
-          `${folderPath}/${field.modelType}`,
+          `${folderPath}/${modelName}`,
         );
 
         new FileWriter().createFile(
           `${outputPath}/${field.argName}Schema.ts`,
           (fileWriter) => writeOutputObjectType({ fileWriter, dmmf }, field),
         );
+
+        exportMap.hasOrCreate(modelName).add(`${field.argName}Schema`);
       });
     });
+
+    ////////////////////////////////////////////////////
+    // WRITE INDEX FILES
+    ////////////////////////////////////////////////////
+
+    if (writeBarrelFiles) {
+      indexFileWriter.createFile(
+        `${folderPath}/index.ts`,
+        ({ writeExport }) => {
+          exportMap.forEach((exportSet, modelName) => {
+            exportSet.forEach((exportName) => {
+              writeExport(`{ ${exportName} }`, `./${modelName}`);
+            });
+          });
+        },
+      );
+    }
   }
 };

@@ -1,42 +1,27 @@
 import { FileWriter } from '../classes';
 import { CreateFiles } from '../types';
-import { writeCustomEnum, writeModelOrType } from './contentWriters';
+import { writeModelOrType } from './contentWriters';
 
 /////////////////////////////////////////////////
 // FUNCTION
 /////////////////////////////////////////////////
 
 export const writeModelFiles: CreateFiles = ({ path, dmmf }) => {
-  const { modelsPath, enumPath, createModelTypes, writeBarrelFiles } = dmmf.generatorConfig;
+  const { modelsPath, createModelTypes, writeBarrelFiles } =
+    dmmf.generatorConfig;
 
   if (!createModelTypes) return;
 
+  // FOLDER PATH AND EXPORT INDEX FILES
+  // ------------------------------------------------------------
   const indexFileWriter = new FileWriter();
   const folderPath = indexFileWriter.createPath(`${path}/${modelsPath}`);
-  const enumsPath = indexFileWriter.createPath(`${path}/${enumPath}`);
-  
+  const writeExportSet = new Set<string>();
+
   if (folderPath) {
-    if (writeBarrelFiles) {
-      indexFileWriter.createFile(
-        `${folderPath}/index.ts`,
-        ({ writeExport }) => {
-          const writeExportSet = new Set<string>();
-
-          dmmf.datamodel.models.forEach((model) => {
-            indexFileWriter.createPath(`${folderPath}/${model.name}`);
-            writeExportSet.add(`${model.name}/${model.name}Schema`);
-          });
-          dmmf.datamodel.types.forEach((model) => {
-            indexFileWriter.createPath(`${folderPath}/${model.name}`);
-            writeExportSet.add(`${model.name}/${model.name}Schema`);
-          });
-
-          writeExportSet.forEach((exportName) => {
-            writeExport(`*`, `./${exportName}`);
-          });
-        },
-      );
-    }
+    ////////////////////////////////////////////////////
+    // WRITE MODEL FILES
+    ////////////////////////////////////////////////////
 
     dmmf.datamodel.models.forEach((model) => {
       const modelPath = indexFileWriter.createPath(
@@ -46,7 +31,12 @@ export const writeModelFiles: CreateFiles = ({ path, dmmf }) => {
         `${modelPath}/${model.name}Schema.ts`,
         (fileWriter) => writeModelOrType({ fileWriter, dmmf }, model),
       );
+      writeExportSet.add(`${model.name}/${model.name}Schema`);
     });
+
+    ////////////////////////////////////////////////////
+    // WRITE MODEL TYPE FILES
+    ////////////////////////////////////////////////////
 
     dmmf.datamodel.types.forEach((model) => {
       const modelPath = indexFileWriter.createPath(
@@ -56,13 +46,22 @@ export const writeModelFiles: CreateFiles = ({ path, dmmf }) => {
         `${modelPath}/${model.name}Schema.ts`,
         (fileWriter) => writeModelOrType({ fileWriter, dmmf }, model),
       );
+      writeExportSet.add(`${model.name}/${model.name}Schema`);
     });
 
-    dmmf.datamodel.enums.forEach((enumData) => {
-      new FileWriter().createFile(
-        `${enumsPath}/${enumData.name}Schema.ts`,
-        (fileWriter) => writeCustomEnum({ fileWriter, dmmf }, enumData),
+    ////////////////////////////////////////////////////
+    // WRITE INDEX FILE
+    ////////////////////////////////////////////////////
+
+    if (writeBarrelFiles) {
+      indexFileWriter.createFile(
+        `${folderPath}/index.ts`,
+        ({ writeExport }) => {
+          writeExportSet.forEach((exportName) => {
+            writeExport(`*`, `./${exportName}`);
+          });
+        },
       );
-    });
+    }
   }
 };

@@ -32,6 +32,7 @@ const SPLIT_REGEX_TYPES: string[] = [
   'ScalarWhere',
   'Aggregate',
   'GroupBy',
+  '(Avg|Count|Max|Min|Sum)OrderByAggregate'
 ];
 
 const FLAGS: RegexFlags[] = ['g'];
@@ -110,7 +111,7 @@ export class ExtendedDMMFInputType
         model.name ===
           this.name.split(
             new RegExp(
-              SPLIT_REGEX_TYPES.join("|"),
+              `(${SPLIT_REGEX_TYPES.join("|")})`,
               FLAGS.join(),
             ),
           )[0] || model.name === compoundModel,

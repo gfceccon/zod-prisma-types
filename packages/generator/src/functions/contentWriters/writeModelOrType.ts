@@ -27,13 +27,6 @@ export const writeModelOrType = (
     writeImportSet(model.imports);
 
     if (createRelationValuesTypes && model.hasRelationFields) {
-      // import the necessary types to handle json nulls
-      // if (model.hasOptionalJsonFields) {
-      //   writeImport(
-      //     `type { JsonValueType | null }`,
-      //     `../${inputTypePath}/transformJsonNull`,
-      //   );
-      // }
       if (model.hasOptionalJsonFields) {
         writeImport(
           `type { JsonValueType }`,
@@ -413,8 +406,6 @@ export const writeModelOrType = (
         )
         .write(`${model.name}PartialRelations`);
     }
-
-    // writer.write(`${model.name}PartialRelations`);
 
     writer
       .blankLine()

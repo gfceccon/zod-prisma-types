@@ -1,3 +1,4 @@
+import { ImportMapping } from '../../constants/relativeImports';
 import { ExtendedDMMFOutputType } from '../../classes';
 import { type ContentWriterOptions } from '../../types';
 
@@ -14,7 +15,7 @@ export const writeSelect = (
   if (useMultipleFiles && !getSingleFileContent) {
     writeImport('{ z }', 'zod');
     writeImport('type { Prisma }', prismaClientPath);
-    writeImportSet(model.selectImports);
+    writeImportSet(model.getSelectImports(ImportMapping(dmmf.generatorConfig).inputModel));
   }
 
   writer

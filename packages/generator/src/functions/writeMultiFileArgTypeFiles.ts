@@ -39,9 +39,7 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
           (fileWriter) => writeArgs({ fileWriter, dmmf }, model),
         );
 
-        exportMap
-          .hasOrCreate(model.name)
-          .add(`${outputPath}/${model.name}ArgsSchema`);
+        exportMap.hasOrCreate(model.name).add(`${model.name}ArgsSchema`);
       }
 
       if (model.writeCountArgs()) {
@@ -95,7 +93,7 @@ export const writeArgTypeFiles: CreateFiles = ({ path, dmmf }) => {
         ({ writeExport }) => {
           exportMap.forEach((exportSet, modelName) => {
             exportSet.forEach((exportName) => {
-              writeExport(`{ ${exportName} }`, `./${modelName}`);
+              writeExport(`{ ${exportName} }`, `./${modelName}/${exportName}`);
             });
           });
         },

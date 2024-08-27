@@ -6,6 +6,7 @@ import { GeneratorConfig } from '../schemas';
 import { ExtendedDMMFDatamodel } from './extendedDMMFDatamodel';
 import { ExtendedDMMFSchemaField } from './extendedDMMFSchemaField';
 import { FormattedNames } from './formattedNames';
+import { RelativeImportType } from './../constants/relativeImports';
 
 /////////////////////////////////////////////////
 // CLASS
@@ -53,7 +54,9 @@ export class ExtendedDMMFOutputType
    * from the datamodel can be added to the input types.
    */
   private _setLinkedModel(datamodel: ExtendedDMMFDatamodel) {
-    return [...datamodel.models, ...datamodel.enums].find((model) => this.name.match(model.name));
+    return [...datamodel.models, ...datamodel.enums].find((model) =>
+      this.name.match(model.name),
+    );
   }
 
   /**
@@ -123,6 +126,33 @@ export class ExtendedDMMFOutputType
     return imports;
   }
 
+  public getSelectImports(relativeImport: RelativeImportType) {
+    const imports = new Set<string>();
+
+    this.fields.forEach((field) => {
+      let path = relativeImport.Output;
+      if (field.linkedModel) {
+        path += `/${field.linkedModel.name}`;
+      }
+
+      if (field.writeSelectFindManyField) {
+        return imports.add(
+          `import { ${field.outputType.type}FindManyArgsSchema } from "${path}/${field.outputType.type}FindManyArgsSchema"`,
+        );
+      }
+
+      if (field.writeSelectField) {
+        return imports.add(
+          `import { ${field.outputType.type}ArgsSchema } from "${path}/${field.outputType.type}ArgsSchema"`,
+        );
+      }
+
+      return undefined;
+    });
+
+    return imports;
+  }
+
   private _setIncludeImports() {
     const imports = new Set<string>();
     const { outputTypePath } = this.generatorConfig;
@@ -137,6 +167,33 @@ export class ExtendedDMMFOutputType
       if (field.writeIncludeField) {
         return imports.add(
           `import { ${field.outputType.type}ArgsSchema } from "../${outputTypePath}/${field.outputType.type}ArgsSchema"`,
+        );
+      }
+
+      return undefined;
+    });
+
+    return imports;
+  }
+
+  public getIncludeImports(relativeImport: RelativeImportType) {
+    const imports = new Set<string>();
+
+    this.fields.forEach((field) => {
+      let path = relativeImport.Output;
+      if (field.linkedModel) {
+        path += `/${field.linkedModel.name}`;
+      }
+
+      if (field.writeIncludeFindManyField) {
+        return imports.add(
+          `import { ${field.outputType.type}FindManyArgsSchema } from "${path}/${field.outputType.type}FindManyArgsSchema"`,
+        );
+      }
+
+      if (field.writeIncludeField) {
+        return imports.add(
+          `import { ${field.outputType.type}ArgsSchema } from "${path}/${field.outputType.type}ArgsSchema"`,
         );
       }
 

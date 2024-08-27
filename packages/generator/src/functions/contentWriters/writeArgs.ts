@@ -1,3 +1,4 @@
+import { ImportMapping } from '../../constants/relativeImports';
 import { ExtendedDMMFOutputType } from '../../classes';
 import { type ContentWriterOptions } from '../../types';
 
@@ -12,20 +13,25 @@ export const writeArgs = (
   }: ContentWriterOptions,
   model: ExtendedDMMFOutputType,
 ) => {
-  const { useMultipleFiles, prismaClientPath, inputTypePath, prismaVersion } =
+  const { useMultipleFiles, prismaClientPath, prismaVersion } =
     dmmf.generatorConfig;
 
   if (useMultipleFiles && !getSingleFileContent) {
     writeImport('{ z }', 'zod');
     writeImport('type { Prisma }', prismaClientPath);
+
+    const importMap = ImportMapping(dmmf.generatorConfig);
+    const inputPath = importMap['output'].InputModel(model.name);
+    console.log(inputPath);
+
     writeImport(
       `{ ${model.name}SelectSchema }`,
-      `../${inputTypePath}/${model.name}SelectSchema`,
+      `${inputPath}/${model.name}SelectSchema`,
     );
     if (model.hasRelationField()) {
       writeImport(
         `{ ${model.name}IncludeSchema }`,
-        `../${inputTypePath}/${model.name}IncludeSchema`,
+        `${inputPath}/${model.name}IncludeSchema`,
       );
     }
   }

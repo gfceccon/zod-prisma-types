@@ -194,7 +194,7 @@ export const writeInputTypeFiles: CreateFiles = ({ path, dmmf }) => {
           ({ writeExport }) => {
             // WRITE MODEL INDEX FILE EXPORTS
             exportSet.forEach((exportName) => {
-              writeExport(`{ ${exportName} }`, `./${exportName}/`);
+              writeExport(`{ ${exportName} }`, `./${exportName}`);
             });
           },
         );
